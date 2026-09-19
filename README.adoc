@@ -1,0 +1,54 @@
+= vecstat
+
+The point of this crate is to provide your `Vec<YourType>` with functions that calculate the Vec's
+statistics without you having to define the statistics methodology yourself, you instead
+define other traits that `YourType` requires in order to have statistics functions available
+for `Vec<YourType>`. The added benefit of defining traits for all your types is that their
+calculations will all be the same, eliminiting the possibility of bugs to arise with only one
+`impl Statistics for AnotherType` and thus your codebase is much more manageable.
+
+This crate exposes traits that model stat-rs's `Statistics` trait with autoimplementations, all
+you have to do is ensure your struct/enum you want in a collection satisfies base traits like
+std's `Add`, `Sub`, `Div`, `Mul`, `Ord`, `PartialOrd` and a couple traits defined in this crate `Zeroable`
+and `Floatable`. `Statistics` is split into different traits so that if you only want your 
+`Vec<YourType>` to have a `::min()` and/or `::max()`, you only need to 
+`impl StatisticsOrdered for YourType {}`. 
+
+The exposed statistics calculations such as `mean()` and `std_dev()` are by default population
+calculations and not sample, to use a sample calculation and risk dividing by zero with `Vec<T>`
+call `std_dev_sample()` instead of `std_dev()`. There's also a `nonempty` feature to use the `nonempty`
+crate so that this crate implements traits for `nonempty::NonEmpty<T>`, and instead of using 
+`StatisticsUnorderedF32` and `StatisticsUnorderedF64` it uses 
+`StatisticsUnorderedF32NonEmpty` and `StatisticsUnorderedF64NonEmpty`.
+
+There are different traits for different kinds of data, like for example if you want min() and max(),
+you need to impl `StatisticsOrdered` and for the default derivation it requires your struct/enum
+to also implement `Ord`. If your type implements `Ord`, you can simply either 
+`impl StatisticsOrdered for YourType {}` or `#[derive(StatisticsOrdered)]` above your struct/enum
+definition if you've elected to use the `derive` feature. For `StatisticsUnorderedF32` 
+your type needs to implement:
+
+[source, rust]
+----
+Zeroable
+        + Add<Output = T>
+        + Div<f32, Output = T>
+        + Sub<Output = T>
+        + Floatable<f32>
+        + Clone
+        + Mul<Output = T>,
+    f32: std::ops::Mul<T>,
+----
+
+Add, Div, Sub, Clone, and Mul are all part of `std`, and Zeroable and Floatable 
+are traits in this crate that define a type that has a zero value through 
+`zero(&self) -> Self` and f32/f64 std definitions of `powi(self, n: i32) -> Self`, 
+`powf(self, n: F) -> Self`, and `sqrt(self) -> Self` respectively. 
+
+== TODO
+
+* `derive` feature is broken. The point of `derive` is so that you only need to use
+derive(StatisticTrait) once so that you don't have to import it in every file you
+need it like an extension trait, but is implemented once as some macro.
+This is a skill issue on my part.
+* `extension` features so that you can use extension versions of `std` traits like `AddExt<Output = T>`
