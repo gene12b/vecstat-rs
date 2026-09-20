@@ -76,13 +76,4 @@ dependencies = [
  "nonempty",
  "thiserror",
  "try-partialord",
- "vecstat-derive",
-]
-
-[[package]]
-name = "vecstat-derive"
-version = "0.1.0"
-dependencies = [
- "quote",
- "syn",
 ]
